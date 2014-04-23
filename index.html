@@ -1,0 +1,471 @@
+<html>
+  <head>
+    <title>Britt's Recipe Thingy</title>
+    <style>
+            .pointer{
+            cursor:pointer;
+            }
+            h1{
+            text-align:center;
+            }
+            .summary tr td{font-size:9px;}
+            h2{
+            -webkit-margin-before: 2px;
+            -webkit-margin-after: 2px;
+            background:#ccc;
+            color:#333;
+            text-align:center;
+            cursor: pointer;
+            }
+            div{
+            -webkit-margin-before: 2px;
+            -webkit-margin-after: 2px;
+            }
+            h3{
+            -webkit-margin-before: 2px;
+            -webkit-margin-after: 2px;
+            }
+            p{
+            -webkit-margin-before: 2px;
+            -webkit-margin-after: 2px;
+            }
+	    .border{ border:1px solid #000; }
+
+	    h2:hover{ color:#000; }
+
+    </style>
+    <script src="jquery.js"></script>
+  <script>
+var data = {measurements:{},categories:[],ingredients:{},recipes:{}};
+var temprecipe = {ingredients:{}};
+var cgibin="/cgi-bin"
+
+$(document).ready( function() {
+    refreshall();
+    $("h2").click(function(){
+	    $(this).next().toggle();
+    });
+
+  $("#addcategory").click( function() {
+      $.ajax({url:cgibin+'/recipes/recipedb.py?cmd=put&tgt=categories&val=["'+$("#categoryadd").val()+'"]',cache: false}).done(function(v) {
+        $("#categoryadd").val('');
+        data['categories'] = v;
+        fillcategories([$("#categorydel"), $("#ingredientcat")]);
+        });
+      });
+
+  $("#delcategory").click( function() {
+    $.ajax({url:cgibin+'/recipes/recipedb.py?cmd=del&tgt=categories&val=["'+$("#categorydel").val()+'"]',cache: false}).done(function(v) {
+      data['categories'] = v;
+      fillcategories([$("#categorydel"), $("#ingredientcat")]);
+      });
+    });
+
+  $("#addmeasurement").click( function() {
+    var tmp = {};
+    tmp[$("#measurementadd").val()] = {"type":$("#measurementtype").val(), "equiv":{"amount":$("#measurementeqv").val(),"unit":$("#measurementeqvtype").val()} };
+    $.ajax({url:cgibin+'/recipes/recipedb.py?cmd=put&tgt=measurements&val='+JSON.stringify(tmp),cache: false}).done(function(v) {
+      $("#measurementadd").val('');
+      data['measurements'] = v;
+      fillmeasurements([$("#measurementdel"),$("#recipeingredientmeastype")],[false,true],['','']);
+      });
+    });
+
+  $("#delmeasurement").click( function() {
+    var tmp = {};
+    tmp[$("#measurementdel").val()] = {};
+    $.ajax({url:cgibin+'/recipes/recipedb.py?cmd=del&tgt=measurements&val='+JSON.stringify(tmp),cache: false}).done(function(v) {
+      data['measurements'] = v;
+      fillmeasurements([$("#measurementdel"),$("#recipeingredientmeastype")],[false,true],['','']);
+      });
+    });
+
+  $("#addingredient").click( function() {
+    var tmp = {};
+    tmp[$("#ingredientadd").val()] = {"categories":$("#ingredientcat").val()};
+    $.ajax({url:cgibin+'/recipes/recipedb.py?cmd=put&tgt=ingredients&val='+JSON.stringify(tmp),cache: false}).done(function(v) {
+      $("#ingredientadd").val('');
+      data['ingredients'] = v;
+      fillingredients();
+      });
+    });
+
+    $("#delingredient").click( function() {
+    var tmp = {};
+    tmp[$("#ingredientdel").val()] = {};
+    $.ajax({url:cgibin+'/recipes/recipedb.py?cmd=del&tgt=ingredients&val='+JSON.stringify(tmp),cache: false}).done(function(v) {
+      data['ingredients'] = v;
+      fillingredients();
+      });
+    });
+
+    $("#addrecipeingredient").click( function() {
+    temprecipe['ingredients'][$("#recipeingredientadd").val()] = {amount:$("#recipeingredientmeas").val(),unit:$("#recipeingredientmeastype").val()};
+    $("#recipeingredientmeas").val('');
+    updatetemprecipe();
+    });
+
+    $("#addrecipe").click( function() {
+    var tmp = {};
+    tmp[$("#recipename").val()] = {directions:$("#directions").val(),ingredients:temprecipe['ingredients'],multiplier:$("#multiplier").val()};
+    syncRecipe(tmp);
+    //$.ajax({url:cgibin+'/recipes/recipedb.py?cmd=put&tgt=recipes&val='+JSON.stringify(tmp),cache: false}).done(function(v) {
+      //$("#directions").val('');
+      //$("#recipename").val('');
+      //$("#ingredients").html('');
+      //$("#recipeingredientadd").val('');
+      //$("#recipeingredientmeas").val('');
+      //$("#recipeingredientmeastype").val('');
+      //$("#multiplier").val('');
+      //temprecipe = {ingredients:{}};
+      //data['recipes'] = v;
+      //fillrecipes();
+      //});
+    });
+
+    $("#delrecipe").click( function() {
+    var tmp = {};
+    tmp[$("#recipedel").val()] = {};
+    if(confirm("Really delete recipe?"))
+    {
+    $.ajax({url:cgibin+'/recipes/recipedb.py?cmd=del&tgt=recipes&val='+JSON.stringify(tmp),cache: false}).done(function(v) {
+      data['recipes'] = v;
+      fillrecipes();
+      });
+    }
+    });
+});
+
+function syncRecipe(tmp)
+{
+  $.ajax({url:cgibin+'/recipes/recipedb.py?cmd=put&tgt=recipes&val='+JSON.stringify(tmp),cache: false}).done(function(v) {
+    $("#directions").val('');
+    $("#recipename").val('');
+    $("#ingredients").html('');
+    $("#recipeingredientadd").val('');
+    $("#recipeingredientmeas").val('');
+    $("#recipeingredientmeastype").val('');
+    $("#multiplier").val('');
+    temprecipe = {ingredients:{}};
+    data['recipes'] = v;
+    fillrecipes();
+    });
+}
+
+
+function updatetemprecipe()
+{
+	$("#ingredients").empty();
+	for(var i in temprecipe['ingredients'])
+	{
+		var m = temprecipe['ingredients'][i];
+		$("#ingredients").append("<p>"+m['amount']+" "+m['unit']+" "+i+"</p>");
+	}
+}
+
+function refreshall()
+{
+  $.ajax({url:cgibin+'/recipes/recipedb.py?cmd=get&tgt=all',
+      cache: false}).done(function(v) {
+        data = v;
+        fillcategories([$("#categorydel"), $("#ingredientcat")]);
+        fillmeasurements([$("#measurementdel"),$("#recipeingredientmeastype")],[false,true],['','']);
+        fillingredients();
+        fillrecipes();
+        });
+}
+
+function fillcategories(selects)
+{
+  for(var s in selects)
+  {
+    var it = selects[s];
+    it.empty();
+    for(var i in data['categories'])
+    {
+      it.append("<option>"+data['categories'][i]+"</option>");
+    }
+  }
+}
+
+
+function fillmeasurements(selects,verbose,selected)
+{
+  var x = 0;
+  for(var s in selects)
+  {
+    var it = selects[s];
+    it.empty();
+    for(var i in data['measurements'])
+    {
+      var sel = "";
+      if(selected[x] == i)
+      {
+        sel = " selected ";
+      }
+      if(verbose[x])
+      {
+        var m = data['measurements'][i];
+        it.append("<option value='"+i+"'"+sel+">"+i+" ("+m['type']+") ["+m['equiv']['amount']+" "+m['equiv']['unit']+"]</option>");
+      }
+      else
+      {
+        it.append("<option"+sel+">"+i+"</option>");
+      }
+    }
+    x += 1;
+  }
+}
+
+function fillingredients()
+{
+  var htm = "";
+  $(".ingredlist").empty();
+  $("#ingredientdel").empty();
+  for(var i in data['ingredients'])
+  {
+    var m = data['ingredients'][i];
+    $("#ingredientdel").append("<option value='"+i+"'>"+i+" ("+m['categories'].toString()+")</option>");
+    htm += "<option>"+i+"</option>";
+  }
+  $(".ingredlist").html(htm);
+}
+
+var ouncestograms = 28.3495231;
+var gramstoounces = 0.03527396;
+var ouncestomililiters = 29.5735;
+var mililiterstoounces = 0.033814;
+function tometric(val,meastype)
+{
+  val = parseFloat(val);
+  var newunit = data['measurements'][meastype]['equiv'];
+  val *= parseFloat(newunit['amount']);
+  meastype = newunit['unit'];
+  if(meastype == 'grams' || meastype == 'mililiters')
+  {
+    return {amount:val,unit:meastype};
+  }
+  else if(meastype = 'ounces')
+  {
+    return {amount:val*ouncestograms,unit:meastype};
+  }
+  else if(meastype = 'floz')
+  {
+    return {amount:val*ouncestomililiters,unit:meastype};
+  }
+}
+
+var TEXT = "text";
+
+
+
+function edit(elem,type,indexarray) {
+  if(type == TEXT)
+  {
+    $(elem).hide().after("<span><input size=\"3\" type='text' value='"+elem.innerHTML+"'></input><button onclick='updateRecipe("+JSON.stringify(indexarray)+",$(this.previousSibling).val());'>save</button><button onclick='$(this).parent().prev().show().next().remove();'>cancel</button></span>");
+  }
+  if(type == "textarea")
+  {
+    $(elem).hide().after("<span><textarea>"+$(elem).html()+"</textarea><button onclick='updateRecipe("+JSON.stringify(indexarray)+",$(this.previousSibling).val());'>save</button><button onclick='$(this).parent().prev().show().next().remove();'>cancel</button></span>");
+  }
+  else if(type == "unit")
+  {
+    $(elem).hide().after("<span><select id=\"mything\"></select><button onclick='updateRecipe("+JSON.stringify(indexarray)+",$(this.previousSibling).val());'>save</button><button onclick='$(this).parent().prev().show().next().remove();'>cancel</button></span>");
+    fillmeasurements([$("#mything")],[false],[$(elem).html()]);
+  }
+}
+
+function updateRecipe(indexarray,value)
+{
+  if(indexarray.length == 4)
+  {
+    if(typeof data['recipes'][indexarray[0]][indexarray[1]][indexarray[2]] != 'undefined')
+    {
+      data['recipes'][indexarray[0]][indexarray[1]][indexarray[2]][indexarray[3]] = value;
+      var tmp = {};
+      tmp[indexarray[0]] = data['recipes'][indexarray[0]];
+      syncRecipe(tmp);
+    }
+  }
+  else if(indexarray.length == 3)
+  {
+    if(typeof data['recipes'][indexarray[0]][indexarray[1]] != 'undefined')
+    {
+      data['recipes'][indexarray[0]][indexarray[1]][indexarray[2]] = value;
+      var tmp = {};
+      tmp[indexarray[0]] = data['recipes'][indexarray[0]];
+      syncRecipe(tmp);
+    }
+  }
+  else if(indexarray.length == 2)
+  {
+    if(typeof data['recipes'][indexarray[0]] != 'undefined')
+    {
+      data['recipes'][indexarray[0]][indexarray[1]] = value;
+      var tmp = {};
+      tmp[indexarray[0]] = data['recipes'][indexarray[0]];
+      syncRecipe(tmp);
+    }
+  }
+}
+
+function deling(elem,indexarray)
+{
+  if(confirm("Do you really want to delete \""+indexarray[2]+"\" from this recipe?"))
+  {
+    if(typeof data['recipes'][indexarray[0]][indexarray[1]][indexarray[2]] != undefined)
+    {
+      delete data['recipes'][indexarray[0]][indexarray[1]][indexarray[2]];
+      var tmp = {};
+      tmp[indexarray[0]] = data['recipes'][indexarray[0]];
+      syncRecipe(tmp);
+    }
+  }
+}
+
+function addingredienttorecipe(recipename)
+{
+    var ingred = $("#ingredientadd"+recipename).val();
+    var amount = $("#ingredientmeas"+recipename).val();
+    var unit = $("#ingredientmeastype"+recipename).val();
+    data['recipes'][recipename]['ingredients'][ingred] = {'amount':amount,'unit':unit};
+    var tmp = {};
+    tmp[recipename] = data['recipes'][recipename];
+    syncRecipe(tmp);
+}
+
+function fillrecipes()
+{
+  var cattotals = {unit:{},munit:{},orig:{},metric:{}};
+  var totals = {unit:{},munit:{},orig:{},metric:{}};
+  $("#recipedel").empty();
+  $("#viewall").empty();
+  for(var i in data['recipes'])
+  {
+    var m = data['recipes'][i];
+    $("#recipedel").append("<option value='"+i+"'>"+i+"</option>");
+    var newdiv = $('<div class="border"></div>').appendTo('#viewall').append("<h3>"+i+"</h3>");
+    var categorytotals = {unit:{},munit:{},orig:{},metric:{}};
+    var multiplier = 1;
+    if(m['multiplier'])
+      multiplier = parseFloat(m['multiplier']);
+    for(var j in m['ingredients'])
+    {
+      var k = m['ingredients'][j];
+      for(var c in data['ingredients'][j]['categories'])
+      {
+        var cat = data['ingredients'][j]['categories'][c];
+        var conv = tometric(k['amount'],k['unit']);
+
+        categorytotals['orig'][cat] = categorytotals['orig'][cat] ? categorytotals['orig'][cat]+k['amount']*multiplier : k['amount']*multiplier;
+        categorytotals['metric'][cat] = categorytotals['metric'][cat] ? categorytotals['metric'][cat]+conv['amount']*multiplier : conv['amount']*multiplier;
+        categorytotals['unit'][cat] = k['unit'];
+        categorytotals['munit'][cat] = conv['unit'];
+        
+        cattotals['orig'][cat] = cattotals['orig'][cat] ? cattotals['orig'][cat]+k['amount']*multiplier : k['amount']*multiplier;
+        cattotals['metric'][cat] = cattotals['metric'][cat] ? cattotals['metric'][cat]+conv['amount']*multiplier : conv['amount']*multiplier;
+        cattotals['unit'][cat] = k['unit'];
+        cattotals['munit'][cat] = conv['unit'];
+      }
+      newdiv.append("<p><span class='pointer' onclick='edit(this,\"text\",[\""+i+"\",\"ingredients\",\""+j+"\",\"amount\"]);'>"+k['amount']+"</span> "+
+      "<span class='pointer' onclick='edit(this,\"unit\",[\""+i+"\",\"ingredients\",\""+j+"\",\"unit\"]);'>"+k['unit']+"</span> "+
+      "<span>"+j+"</span> "+
+      "<button onclick='deling(this,[\""+i+"\",\"ingredients\",\""+j+"\"])'>X</button></p>");
+      var conv = tometric(k['amount'],k['unit']);
+
+      totals['orig'][j] = totals['orig'][j]?totals['orig'][j]+k['amount']*multiplier:k['amount']*multiplier;
+      totals['metric'][j] = totals['metric'][j]?totals['metric'][j]+conv['amount']*multiplier:conv['amount']*multiplier;
+      totals['unit'][j] = k['unit'];
+      totals['munit'][j] = conv['unit'];
+    }
+    $('<span class="pointer" onclick="$(this).next().toggle();($(this).html() == \'-\')?$(this).html(\'+\'):$(this).html(\'-\');">+</span>').appendTo(newdiv);
+    $('<span><select class="ingredlist" id="ingredientadd'+i+'"></select> '+
+    '<input type="text" id="ingredientmeas'+i+'" size="3"/> '+
+    '<select id="ingredientmeastype'+i+'"></select> '+
+    '<button onclick="addingredienttorecipe(\''+i+'\');">Add</button></span>').appendTo(newdiv).toggle().after("<br/>");
+    fillingredients();
+    fillmeasurements([$('#ingredientmeastype'+i)],[false],['']);
+    newdiv.append("<p class='pointer' onclick='edit(this,\"textarea\",[\""+i+"\",\"directions\"]);'>"+m['directions']+"</p>");
+    var table = $("<table class='summary'>").appendTo(newdiv);
+    for(var c in categorytotals['metric'])
+    {
+      table.append("<tr><td>"+c+"</td><td>"+categorytotals['metric'][c].toFixed(0)+" "+categorytotals['munit'][c]+"</td></tr>");
+    }
+  }
+  $('#catresults').empty();
+  var table = $("<table>").appendTo($('#catresults'));
+  for(var c in cattotals['metric'])
+  {
+    table.append("<tr><td>"+c+"</td><td>"+cattotals['metric'][c].toFixed(0)+" "+cattotals['munit'][c]+"</td></tr>");
+  }
+  $('#ingredresults').empty();
+  var table = $("<table>").appendTo($('#ingredresults'));
+  for(var c in totals['metric'])
+  {
+    table.append("<tr><td>"+c+"</td><td>"+totals['metric'][c].toFixed(0)+" "+totals['munit'][c]+"</td></tr>");
+  }
+}
+  </script>
+  </head>
+  <body>
+    <h1>Britt's Recipe Thingy</h1>
+    <h2>Food Categories</h2>
+    <div id="cat" class="border">
+    <select id="categorydel"></select><button id="delcategory">Delete</button><br/>
+    <input type="text" id="categoryadd"/><button id="addcategory">Add</button>
+    </div>
+    <h2>Measurement Types</h2>
+    <div id="mea" class="border">
+    <input type="text" id="measurementadd"/>
+    <select id="measurementtype">
+      <option value="vol">Volume</option>
+      <option value="wgt">Weight</option>
+    </select>
+    equiv. 
+    <input type="text" id="measurementeqv"/>
+    <select id="measurementeqvtype">
+      <option value="floz">fl. oz.</option>
+      <option value="ml">ml</option>
+      <option value="oz">ounces</option>
+      <option value="g">grams</option>
+    </select>
+    <button id="addmeasurement">Add</button><br/>
+    <select id="measurementdel"></select><button id="delmeasurement">Delete</button><br/>
+    </div>
+    <h2>Ingredients</h2>
+    <div id="ing" class="border">
+    <input type="text" id="ingredientadd"/>
+    <select multiple id="ingredientcat"></select>
+    <button id="addingredient">Add</button><br/>
+    <select id="ingredientdel"></select>
+    <button id="delingredient">Delete</button>
+    </div>
+    <h2>Recipes</h2>
+    <div>
+    <div id="rec" class="border">
+    <h3>Name</h3>
+    <input type="text" id="recipename"/>
+    <h3>Ingredients</h3>
+    <select class="ingredlist" id="recipeingredientadd"></select>
+    <input type="text" id="recipeingredientmeas" size="3"/>
+    <select id="recipeingredientmeastype"></select>
+    <button id="addrecipeingredient">Add</button>
+    <div id="ingredients"></div>
+    <h3>Directions</h3>
+    <textarea id="directions"></textarea><br/>
+    <h3>Multiplier</h3>
+    <input type="text" id="multiplier" size="3"><br/>
+    <button id="addrecipe">Add Recipe</button><br/>
+    </div>
+    <div class="border">
+    <select id="recipedel"></select><button id="delrecipe">Delete Recipe</button>
+    </div>
+    </div>
+    <h2>Summary</h2>
+    <div id="viewall"></div>
+    <h2>Category Totals</h2>
+    <div id="catresults" class="border"></div>
+    <h2>Ingredient Totals</h2>
+    <div id="ingredresults" class="border"></div>
+  </body>
+<html>
