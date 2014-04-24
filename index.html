@@ -2,45 +2,50 @@
   <head>
     <title>Britt's Recipe Thingy</title>
     <style>
-            .pointer{
-            cursor:pointer;
-            }
-            h1{
-            text-align:center;
-            }
-            .summary tr td{font-size:9px;}
-            h2{
-            -webkit-margin-before: 2px;
-            -webkit-margin-after: 2px;
-            background:#ccc;
-            color:#333;
-            text-align:center;
-            cursor: pointer;
-            }
-            div{
-            -webkit-margin-before: 2px;
-            -webkit-margin-after: 2px;
-            }
-            h3{
-            -webkit-margin-before: 2px;
-            -webkit-margin-after: 2px;
-            }
-            p{
-            -webkit-margin-before: 2px;
-            -webkit-margin-after: 2px;
-            }
-	    .border{ border:1px solid #000; }
-
-	    h2:hover{ color:#000; }
-
+      .pointer{
+        cursor:pointer;
+      }
+      h1{
+        text-align:center;
+      }
+      .summary tr td{
+        font-size:9px;
+      }
+      h2{
+        -webkit-margin-before: 2px;
+        -webkit-margin-after: 2px;
+        background:#ccc;
+        color:#333;
+        text-align:center;
+        cursor: pointer;
+      }
+      div{
+        -webkit-margin-before: 2px;
+        -webkit-margin-after: 2px;
+      }
+      h3{
+        -webkit-margin-before: 2px;
+        -webkit-margin-after: 2px;
+      }
+      p{
+        -webkit-margin-before: 2px;
+        -webkit-margin-after: 2px;
+      }
+      .border{
+        border:1px solid #000;
+      }
+      h2:hover{
+        color:#000;
+      }
     </style>
     <script src="jquery.js"></script>
-  <script>
+    <script>
 var data = {measurements:{},categories:[],ingredients:{},recipes:{}};
 var temprecipe = {ingredients:{}};
 var cgibin="/cgi-bin"
 
-$(document).ready( function() {
+$(document).ready( function()
+{
     refreshall();
     $("h2").click(function(){
 	    $(this).next().toggle();
@@ -109,18 +114,6 @@ $(document).ready( function() {
     var tmp = {};
     tmp[$("#recipename").val()] = {directions:$("#directions").val(),ingredients:temprecipe['ingredients'],multiplier:$("#multiplier").val()};
     syncRecipe(tmp);
-    //$.ajax({url:cgibin+'/recipes/recipedb.py?cmd=put&tgt=recipes&val='+JSON.stringify(tmp),cache: false}).done(function(v) {
-      //$("#directions").val('');
-      //$("#recipename").val('');
-      //$("#ingredients").html('');
-      //$("#recipeingredientadd").val('');
-      //$("#recipeingredientmeas").val('');
-      //$("#recipeingredientmeastype").val('');
-      //$("#multiplier").val('');
-      //temprecipe = {ingredients:{}};
-      //data['recipes'] = v;
-      //fillrecipes();
-      //});
     });
 
     $("#delrecipe").click( function() {
@@ -255,12 +248,9 @@ function tometric(val,meastype)
   }
 }
 
-var TEXT = "text";
-
-
-
-function edit(elem,type,indexarray) {
-  if(type == TEXT)
+function edit(elem,type,indexarray)
+{
+  if(type == "text")
   {
     $(elem).hide().after("<span><input size=\"3\" type='text' value='"+elem.innerHTML+"'></input><button onclick='updateRecipe("+JSON.stringify(indexarray)+",$(this.previousSibling).val());'>save</button><button onclick='$(this).parent().prev().show().next().remove();'>cancel</button></span>");
   }
@@ -411,55 +401,55 @@ function fillrecipes()
     <h1>Britt's Recipe Thingy</h1>
     <h2>Food Categories</h2>
     <div id="cat" class="border">
-    <select id="categorydel"></select><button id="delcategory">Delete</button><br/>
-    <input type="text" id="categoryadd"/><button id="addcategory">Add</button>
+      <select id="categorydel"></select><button id="delcategory">Delete</button><br/>
+      <input type="text" id="categoryadd"/><button id="addcategory">Add</button>
     </div>
     <h2>Measurement Types</h2>
     <div id="mea" class="border">
-    <input type="text" id="measurementadd"/>
-    <select id="measurementtype">
-      <option value="vol">Volume</option>
-      <option value="wgt">Weight</option>
-    </select>
-    equiv. 
-    <input type="text" id="measurementeqv"/>
-    <select id="measurementeqvtype">
-      <option value="floz">fl. oz.</option>
-      <option value="ml">ml</option>
-      <option value="oz">ounces</option>
-      <option value="g">grams</option>
-    </select>
-    <button id="addmeasurement">Add</button><br/>
-    <select id="measurementdel"></select><button id="delmeasurement">Delete</button><br/>
+      <input type="text" id="measurementadd"/>
+      <select id="measurementtype">
+        <option value="vol">Volume</option>
+        <option value="wgt">Weight</option>
+      </select>
+      equiv. 
+      <input type="text" id="measurementeqv"/>
+      <select id="measurementeqvtype">
+        <option value="floz">fl. oz.</option>
+        <option value="ml">ml</option>
+        <option value="oz">ounces</option>
+        <option value="g">grams</option>
+      </select>
+      <button id="addmeasurement">Add</button><br/>
+      <select id="measurementdel"></select><button id="delmeasurement">Delete</button><br/>
     </div>
     <h2>Ingredients</h2>
     <div id="ing" class="border">
-    <input type="text" id="ingredientadd"/>
-    <select multiple id="ingredientcat"></select>
-    <button id="addingredient">Add</button><br/>
-    <select id="ingredientdel"></select>
-    <button id="delingredient">Delete</button>
+      <input type="text" id="ingredientadd"/>
+      <select multiple id="ingredientcat"></select>
+      <button id="addingredient">Add</button><br/>
+      <select id="ingredientdel"></select>
+      <button id="delingredient">Delete</button>
     </div>
     <h2>Recipes</h2>
     <div>
-    <div id="rec" class="border">
-    <h3>Name</h3>
-    <input type="text" id="recipename"/>
-    <h3>Ingredients</h3>
-    <select class="ingredlist" id="recipeingredientadd"></select>
-    <input type="text" id="recipeingredientmeas" size="3"/>
-    <select id="recipeingredientmeastype"></select>
-    <button id="addrecipeingredient">Add</button>
-    <div id="ingredients"></div>
-    <h3>Directions</h3>
-    <textarea id="directions"></textarea><br/>
-    <h3>Multiplier</h3>
-    <input type="text" id="multiplier" size="3"><br/>
-    <button id="addrecipe">Add Recipe</button><br/>
-    </div>
-    <div class="border">
-    <select id="recipedel"></select><button id="delrecipe">Delete Recipe</button>
-    </div>
+      <div id="rec" class="border">
+        <h3>Name</h3>
+        <input type="text" id="recipename"/>
+        <h3>Ingredients</h3>
+        <select class="ingredlist" id="recipeingredientadd"></select>
+        <input type="text" id="recipeingredientmeas" size="3"/>
+        <select id="recipeingredientmeastype"></select>
+        <button id="addrecipeingredient">Add</button>
+        <div id="ingredients"></div>
+        <h3>Directions</h3>
+        <textarea id="directions"></textarea><br/>
+        <h3>Multiplier</h3>
+        <input type="text" id="multiplier" size="3"><br/>
+        <button id="addrecipe">Add Recipe</button><br/>
+      </div>
+      <div class="border">
+        <select id="recipedel"></select><button id="delrecipe">Delete Recipe</button>
+      </div>
     </div>
     <h2>Summary</h2>
     <div id="viewall"></div>
