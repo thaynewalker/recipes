@@ -42,7 +42,8 @@
     <script>
 var data = {measurements:{},categories:[],ingredients:{},recipes:{}};
 var temprecipe = {ingredients:{}};
-var cgibin="/cgi-bin"
+//var cgibin="/cgi-bin"
+var cgibin=""
 
 $(document).ready( function()
 {
@@ -112,7 +113,7 @@ $(document).ready( function()
 
     $("#addrecipe").click( function() {
     var tmp = {};
-    tmp[$("#recipename").val()] = {directions:$("#directions").val(),ingredients:temprecipe['ingredients'],multiplier:$("#multiplier").val()};
+    tmp[$("#recipename").val()] = {directions:$("#directions").val(),ingredients:temprecipe['ingredients'],multiplier:$("#multiplier").val(),servings:$("#servings").val()};
     syncRecipe(tmp);
     });
 
@@ -139,6 +140,7 @@ function syncRecipe(tmp)
     $("#recipeingredientmeas").val('');
     $("#recipeingredientmeastype").val('');
     $("#multiplier").val('');
+    $("#servings").val('');
     temprecipe = {ingredients:{}};
     data['recipes'] = v;
     fillrecipes();
@@ -376,6 +378,7 @@ function fillrecipes()
     fillingredients();
     fillmeasurements([$('#ingredientmeastype'+i)],[false],['']);
     newdiv.append("<p class='pointer' onclick='edit(this,\"textarea\",[\""+i+"\",\"directions\"]);'>"+m['directions']+"</p>");
+    newdiv.append("<p>Makes "+m['servings']+" servings.</p>");
     var table = $("<table class='summary'>").appendTo(newdiv);
     for(var c in categorytotals['metric'])
     {
@@ -443,6 +446,8 @@ function fillrecipes()
         <div id="ingredients"></div>
         <h3>Directions</h3>
         <textarea id="directions"></textarea><br/>
+	<h3>Number of Servings</h3>
+    	<input type="text" id="servings" size="3"><br/>
         <h3>Multiplier</h3>
         <input type="text" id="multiplier" size="3"><br/>
         <button id="addrecipe">Add Recipe</button><br/>
