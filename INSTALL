@@ -1,0 +1,15 @@
+This software depends on you having a running webserver with python 2.7 installed.
+
+To install, simply copy the files to your web directory.
+
+On IIS, you must add python to your CGI settings
+
+On linux/Apache, the following will work (depending on how your apache install is configured):
+cd <web root directory>/cgi-bin
+git clone https://github.com/thaynewalker/recipes.git recipes
+chown -R apache:apache recipes
+ln -s <web root directory>/cgi-bin/recipes <web root directory>/html/recipes
+
+After installing the files, make sure that your recipes.json is writable by the webserver. This can be done on windows by turning off the "read only" setting. On linux run: chmod o+w recipes.json; chmod o+x recipedb.py
+
+Finally open your browser to: http://localhost/recipes/
